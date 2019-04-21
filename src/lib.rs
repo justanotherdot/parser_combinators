@@ -7,8 +7,7 @@ struct Element {
 
 pub fn match_literal(expected: &'static str) -> impl Fn(&str) -> Result<(&str, ()), &str> {
     move |input| match input.get(0..expected.len()) {
-        Some(next) if next == expected =>
-            Ok((&input[expected.len()..], ())),
+        Some(next) if next == expected => Ok((&input[expected.len()..], ())),
         _ => Err(input),
     }
 }
@@ -34,19 +33,21 @@ pub fn identifier(input: &str) -> Result<(&str, String), &str> {
     Ok((&input[next_index..], matched))
 }
 
-pub fn pair<P1, P2, R1, R2>(parser1: P1, parser2: P2) -> impl Fn(&str) -> Result<(&str, (R1, R2)), &str>
+pub fn pair<P1, P2, R1, R2>(
+    parser1: P1,
+    parser2: P2,
+) -> impl Fn(&str) -> Result<(&str, (R1, R2)), &str>
 where
-P1: Fn(&str) -> Result<(&str, R1), &str>,
-P2: Fn(&str) -> Result<(&str, R2), &str>,
+    P1: Fn(&str) -> Result<(&str, R1), &str>,
+    P2: Fn(&str) -> Result<(&str, R2), &str>,
 {
     move |input| match parser1(input) {
         Ok((next_input, result1)) => match parser2(next_input) {
             Ok((final_input, result2)) => Ok((final_input, (result1, result2))),
-            Err(err) => Err(err)
+            Err(err) => Err(err),
         },
-        Err(err) => Err(err)
+        Err(err) => Err(err),
     }
-
 }
 
 pub fn map<P, F, A, B>(parser: P, map_fn: F) -> impl Fn(&str) -> Result<(&str, B), &str>
@@ -54,10 +55,7 @@ where
     P: Fn(&str) -> Result<(&str, A), &str>,
     F: Fn(A) -> B,
 {
-    move |input| match parser(input) {
-        Ok((next_input, result)) => Ok((next_input, map_fn(result))),
-        Err(err) => Err(err),
-    }
+    move |input| parser(input).map(|(next_input, result)| (next_input, map_fn(result)))
 }
 
 #[cfg(test)]
@@ -67,20 +65,14 @@ mod tests {
     #[test]
     fn literal_parser() {
         let parse_joe = match_literal("Hello Joe!");
-        assert_eq!(
-            Ok(("", ())),
-            parse_joe("Hello Joe!")
-        );
+        assert_eq!(Ok(("", ())), parse_joe("Hello Joe!"));
 
         assert_eq!(
             Ok((" Hello Robert!", ())),
             parse_joe("Hello Joe! Hello Robert!")
         );
 
-        assert_eq!(
-            Err("Hello Mike!"),
-            parse_joe("Hello Mike!")
-        );
+        assert_eq!(Err("Hello Mike!"), parse_joe("Hello Mike!"));
     }
 
     #[test]
