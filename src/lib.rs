@@ -95,10 +95,23 @@ pub fn one_or_more<'a, P, A>(parser: P) -> impl Parser<'a, Vec<A>>
 where
     P: Parser<'a, A>,
 {
-    map(pair(parser, zero_or_more(parser)), |(head, mut tail)| {
-        tail.insert(0, head);
-        tail
-    })
+    move |mut input| {
+        let mut result = Vec::new();
+
+        if let Ok((next_input, first_item)) = parser.parse(input) {
+            input = next_input;
+            result.push(first_item);
+        } else {
+            return Err(input);
+        }
+
+        while let Ok((next_input, next_item)) = parser.parse(input) {
+            input = next_input;
+            result.push(next_item);
+        }
+
+        Ok((input, result))
+    }
 }
 
 pub fn zero_or_more<'a, P, A>(parser: P) -> impl Parser<'a, Vec<A>>
