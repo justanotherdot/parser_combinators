@@ -230,14 +230,11 @@ pub fn element_start<'a>() -> impl Parser<'a, (String, Vec<(String, String)>)> {
 }
 
 pub fn single_element<'a>() -> impl Parser<'a, Element> {
-    map(
-        left(element_start(), match_literal("/>")),
-        |(name, attributes)| Element {
-            name,
-            attributes,
-            children: vec![],
-        },
-    )
+    left(element_start(), match_literal("/>")).map(|(name, attributes)| Element {
+        name,
+        attributes,
+        children: vec![],
+    })
 }
 
 #[cfg(test)]
