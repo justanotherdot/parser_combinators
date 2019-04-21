@@ -1,5 +1,3 @@
-#![type_length_limit = "268435456"]
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Element {
     name: String,
