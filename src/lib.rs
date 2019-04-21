@@ -1,7 +1,7 @@
-#![type_length_limit = "2097152"]
+#![type_length_limit = "268435456"]
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct Element {
+pub struct Element {
     name: String,
     attributes: Vec<(String, String)>,
     children: Vec<Element>,
@@ -187,6 +187,21 @@ pub fn attributes<'a>() -> impl Parser<'a, Vec<(String, String)>> {
     zero_or_more(right(space1(), attribute_pair()))
 }
 
+pub fn element_start<'a>() -> impl Parser<'a, (String, Vec<(String, String)>)> {
+    right(match_literal("<"), pair(identifier, attributes()))
+}
+
+pub fn single_element<'a>() -> impl Parser<'a, Element> {
+    map(
+        left(element_start(), match_literal("/>")),
+        |(name, attributes)| Element {
+            name,
+            attributes,
+            children: vec![],
+        },
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use crate::*;
@@ -288,6 +303,21 @@ mod tests {
                 ]
             )),
             attributes().parse(" one=\"1\" two=\"2\"")
+        );
+    }
+
+    #[test]
+    fn single_element_parser() {
+        assert_eq!(
+            Ok((
+                "",
+                Element {
+                    name: "div".to_string(),
+                    attributes: vec![("class".to_string(), "float".to_string())],
+                    children: vec![]
+                }
+            )),
+            single_element().parse("<div class=\"float\"/>")
         );
     }
 }
